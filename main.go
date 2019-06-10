@@ -3,7 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"strings"
+	"log"
+	"os"
 
 	"github.com/fatih/color"
 )
@@ -13,31 +14,36 @@ func main() {
 	// Read a fixed number of bytes each time from the file
 	// The number of bytes read can be defined as a constant
 
-	const MaxLength = 10
-	inputString := "abcdefghijklmnopqrstuvwxyz"
-	stringScanner := bufio.NewScanner(strings.NewReader(inputString))
+	const MaxLengthPerToken = 10
+	openFile, err := os.Open("testFile")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileScanner := bufio.NewScanner(openFile)
 
 	split := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		// fmt.Printf("%t\t%d\t%s\n", atEOF, len(data), data)
-
-		if len(data) <= MaxLength && len(data) != 0 {
+		if !atEOF {
+			fmt.Println("This is the End Of File")
+			fmt.Println(string(data))
+		}
+		if len(data) <= MaxLengthPerToken && len(data) != 0 {
 			return len(data), data, nil
 		}
-
 		return 0, nil, nil
 	}
 
-	stringScanner.Split(split)
+	fileScanner.Split(split)
 
-	buf := make([]byte, 10)
-	stringScanner.Buffer(buf, bufio.MaxScanTokenSize)
+	buf := make([]byte, MaxLengthPerToken)
+	fileScanner.Buffer(buf, MaxLengthPerToken)
 
-	for stringScanner.Scan() {
-		color.Cyan("Inside scan")
-		fmt.Printf("%s\n", stringScanner.Text())
+	for fileScanner.Scan() {
+		color.Cyan("Scanning next token")
+		fmt.Printf("%s\n", fileScanner.Text())
 	}
 
-	errScanning := stringScanner.Err()
+	errScanning := fileScanner.Err()
 
 	if errScanning != nil {
 		color.Yellow(errScanning.Error())
