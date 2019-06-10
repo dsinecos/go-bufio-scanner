@@ -3,47 +3,44 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
+	"strings"
 
 	"github.com/fatih/color"
 )
 
 func main() {
 
-	// To Read the contents of the file all at once
-	content, err := ioutil.ReadFile("testFile")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("File contents: \n%s", content)
+	// Read a fixed number of bytes each time from the file
+	// The number of bytes read can be defined as a constant
 
-	// To Read the contents of the file in parts
+	const MaxLength = 10
+	inputString := "abcdefghijklmnopqrstuvwxyz"
+	stringScanner := bufio.NewScanner(strings.NewReader(inputString))
 
-	openFile, err := os.Open("testFile")
+	split := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		// fmt.Printf("%t\t%d\t%s\n", atEOF, len(data), data)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+		if len(data) <= MaxLength && len(data) != 0 {
+			return len(data), data, nil
+		}
 
-	fileScanner := bufio.NewScanner(openFile)
-
-	// To Read lines on the file greater than 64K in size
-	const maxScanTokenSize = 99893 // Bytes
-	buf := make([]byte, maxScanTokenSize)
-
-	fileScanner.Buffer(buf, maxScanTokenSize)
-
-	// Each time scan is invoked it returns the next line in the file
-	for fileScanner.Scan() {
-		color.Cyan("Next line \n")
-		fmt.Println(fileScanner.Text() + "\n")
+		return 0, nil, nil
 	}
 
-	// If .Scan enounters an error, it can be retrieved using .Err method
-	fileError := fileScanner.Err()
-	if fileError != nil {
-		fmt.Println(fileError)
+	stringScanner.Split(split)
+
+	buf := make([]byte, 10)
+	stringScanner.Buffer(buf, bufio.MaxScanTokenSize)
+
+	for stringScanner.Scan() {
+		color.Cyan("Inside scan")
+		fmt.Printf("%s\n", stringScanner.Text())
 	}
+
+	errScanning := stringScanner.Err()
+
+	if errScanning != nil {
+		color.Yellow(errScanning.Error())
+	}
+
 }
